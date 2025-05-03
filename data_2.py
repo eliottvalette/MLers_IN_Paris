@@ -16,6 +16,8 @@ from sklearn import metrics
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import classification_report, accuracy_score, roc_curve, confusion_matrix
 from sklearn.model_selection import train_test_split
+from xgboost import XGBClassifier
+
 
 import os
 for dirname, _, filenames in os.walk('/kaggle/input'):
@@ -179,10 +181,16 @@ X_train_tensor = torch.FloatTensor(X_train_scaled)
 X_test_tensor = torch.FloatTensor(X_test_scaled)
 
 # Convert labels to one-hot encoding
-y_train_tensor = torch.zeros(len(y_train), len(np.unique(y_train)))
-y_train_tensor[range(len(y_train)), y_train.astype(int)] = 1
-y_test_tensor = torch.zeros(len(y_test), len(np.unique(y_test)))
-y_test_tensor[range(len(y_test)), y_test.astype(int)] = 1
+unique_labels = np.unique(y_train)
+label_map = {label: i for i, label in enumerate(unique_labels)}
+
+y_train_indices = np.array([label_map[label] for label in y_train])
+y_test_indices = np.array([label_map[label] for label in y_test])
+
+y_train_tensor = torch.zeros(len(y_train), len(unique_labels))
+y_train_tensor[range(len(y_train)), y_train_indices] = 1
+y_test_tensor = torch.zeros(len(y_test), len(unique_labels))
+y_test_tensor[range(len(y_test)), y_test_indices] = 1
 
 # %%
 # Create PyTorch datasets
@@ -403,152 +411,191 @@ plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# # Classical Machine Learning Models
+# # XGBoost Model
 
 # %%
-# Import machine learning models
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
+# Train XGBoost model
+xgb_model = XGBClassifier(
+    n_estimators=100,
+    learning_rate=0.1,
+    max_depth=5,
+    min_child_weight=1,
+    gamma=0,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    objective='multi:softprob',
+    num_class=len(np.unique(y_train)),
+    random_state=42,
+    use_label_encoder=False,
+    eval_metric='mlogloss'
+)
+
+# Create a validation set for XGBoost
+X_train_xgb, X_val_xgb, y_train_xgb, y_val_xgb = train_test_split(
+    X_train, y_train, test_size=0.1, random_state=42
+)
+
+# Train the model with early stopping
+eval_set = [(X_val_xgb, y_val_xgb)]
+xgb_model.fit(
+    X_train_xgb, 
+    y_train_xgb,
+    eval_set=eval_set,
+    verbose=True,
+    early_stopping_rounds=10
+)
+
+# %% [markdown]
+# # XGBoost Model Validation and Results
 
 # %%
-# Define models
-models = {
-    "Logistic Regression": LogisticRegression(max_iter=1000),
-    "Random Forest": RandomForestClassifier(n_estimators=100, random_state=42),
-    "Gradient Boosting": GradientBoostingClassifier(random_state=42),
-    "SVM": SVC(probability=True, random_state=42),
-    "K-Nearest Neighbors": KNeighborsClassifier(),
-    "Naive Bayes": GaussianNB(),
-    "Decision Tree": DecisionTreeClassifier(random_state=42)
-}
+# Get XGBoost predictions
+xgb_predicted = xgb_model.predict(X_test)
+xgb_predicted_proba = xgb_model.predict_proba(X_test)
 
 # %%
-# Train and evaluate each model
-results = []
-for name, model in models.items():
-    # Train model
-    model.fit(X_train_scaled, y_train)
-    
-    # Make predictions
-    y_pred = model.predict(X_test_scaled)
-    
-    # Calculate evaluation metrics
-    accuracy = accuracy_score(y_test, y_pred) * 100
-    precision = metrics.precision_score(y_test, y_pred, average='macro')
-    recall = metrics.recall_score(y_test, y_pred, average='macro')
-    f1 = metrics.f1_score(y_test, y_pred, average='macro')
-    
-    # Print results
-    print(f"\nModel: {name}")
-    print(f"Accuracy: {accuracy:.2f}%")
-    print(f"Precision: {precision:.4f}")
-    print(f"Recall: {recall:.4f}")
-    print(f"F1 Score: {recall:.4f}")
-    
-    # Save results
-    results.append({
-        'Model': name,
-        'Accuracy': accuracy,
-        'Precision': precision,
-        'Recall': recall,
-        'F1 Score': f1
-    })
-
-# Convert results to dataframe
-results_df = pd.DataFrame(results)
+# Model evaluation
+print("XGBoost Results:")
+print(classification_report(y_test, xgb_predicted))
 
 # %%
-# Display summary table
-print("\nModel Performance Summary:")
-results_df.set_index('Model', inplace=True)
-results_df
+# XGBoost confusion matrix
+plt.figure(figsize=(10, 8))
+cm_xgb = confusion_matrix(y_test, xgb_predicted)
+labels = [f'Class {i}' for i in range(num_classes)]
+
+# Calculate percentages for display
+cm_percent_xgb = cm_xgb.astype('float') / cm_xgb.sum(axis=1)[:, np.newaxis] * 100
+
+# Define custom annotations
+annot_xgb = np.empty_like(cm_xgb).astype(str)
+for i in range(cm_xgb.shape[0]):
+    for j in range(cm_xgb.shape[1]):
+        annot_xgb[i, j] = f'{cm_xgb[i, j]}\n({cm_percent_xgb[i, j]:.1f}%)'
+
+ax = sns.heatmap(cm_xgb, annot=annot_xgb, fmt='', cmap='Greens', linewidths=1, linecolor='black',
+                 xticklabels=labels, yticklabels=labels, cbar=False, annot_kws={"size": 12})
+
+plt.title('XGBoost Confusion Matrix', fontsize=16, pad=20)
+plt.xlabel('Predicted Values', fontsize=14)
+plt.ylabel('Actual Values', fontsize=14)
+plt.tight_layout()
+
+# Add global accuracy
+accuracy_xgb = np.trace(cm_xgb) / np.sum(cm_xgb) * 100
+plt.figtext(0.5, 0.01, f'Overall Accuracy: {accuracy_xgb:.2f}%', ha='center', fontsize=12)
+
+plt.show()
 
 # %%
-# Enhanced visualization of model comparison
-plt.figure(figsize=(14, 8))
-sns.barplot(x='Model', y='Accuracy', data=results_df.reset_index(), palette='viridis')
-plt.title('Machine Learning Models Accuracy Comparison', fontsize=16)
-plt.xlabel('Model', fontsize=14)
-plt.ylabel('Accuracy (%)', fontsize=14)
-plt.xticks(rotation=45, ha='right')
-plt.grid(axis='y', linestyle='--', alpha=0.7)
+# XGBoost ROC curves for multiclass
+plt.figure(figsize=(10, 8))
 
-# Add value labels on bars
-for i, v in enumerate(results_df['Accuracy']):
-    plt.text(i, v + 0.5, f"{v:.1f}%", ha='center', fontsize=10)
+for i, color in zip(range(num_classes), colors):
+    # For each class, calculate ROC curve (one-vs-rest)
+    xgb_fpr, xgb_tpr, _ = roc_curve((y_test == i).astype(int), xgb_predicted_proba[:, i])
+    xgb_roc_auc = metrics.auc(xgb_fpr, xgb_tpr)
+    plt.plot(xgb_fpr, xgb_tpr, color=color, lw=2, 
+             label=f'Class {i} (AUC = {xgb_roc_auc:.3f})')
 
+plt.plot([0, 1], [0, 1], 'navy', lw=2, linestyle='--', label='Reference Line')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate', fontsize=12)
+plt.ylabel('True Positive Rate', fontsize=12)
+plt.title('XGBoost ROC Curves (One-vs-Rest)', fontsize=16)
+plt.legend(loc="lower right", fontsize=10)
+plt.grid(True, linestyle='--', alpha=0.6)
 plt.tight_layout()
 plt.show()
 
 # %%
-# Compare all metrics across models
-metrics_data = results_df.reset_index().melt(id_vars=['Model'], 
-                                          value_vars=['Accuracy', 'Precision', 'Recall', 'F1 Score'],
-                                          var_name='Metric', value_name='Value')
+# Feature importance visualization for XGBoost
+plt.figure(figsize=(12, 8))
+feature_names = X.columns
+xgb_importance = xgb_model.feature_importances_
+indices = np.argsort(xgb_importance)[::-1]
 
-# Adjust Accuracy to be on same scale as other metrics
-metrics_data.loc[metrics_data['Metric'] == 'Accuracy', 'Value'] = metrics_data.loc[metrics_data['Metric'] == 'Accuracy', 'Value'] / 100
-
-plt.figure(figsize=(16, 10))
-sns.barplot(x='Model', y='Value', hue='Metric', data=metrics_data, palette='Set2')
-plt.title('Model Performance Metrics Comparison', fontsize=16)
-plt.xlabel('Model', fontsize=14)
-plt.ylabel('Score', fontsize=14)
-plt.ylim(0, 1.0)
-plt.xticks(rotation=45, ha='right')
-plt.legend(title='Metric', loc='upper right')
-plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.title('XGBoost Feature Importance', fontsize=16)
+plt.bar(range(len(xgb_importance)), xgb_importance[indices], color='forestgreen', align='center')
+plt.xticks(range(len(xgb_importance)), [feature_names[i] for i in indices], rotation=90)
 plt.tight_layout()
 plt.show()
 
 # %% [markdown]
-# # Model Comparison: Neural Network vs ML Models
+# # Model Comparison
 
 # %%
-# Get neural network metrics
-nn_accuracy = accuracy_score(test_targets, nn_predicted) * 100
-nn_precision = metrics.precision_score(test_targets, nn_predicted, average='macro')
-nn_recall = metrics.recall_score(test_targets, nn_predicted, average='macro')
-nn_f1 = metrics.f1_score(test_targets, nn_predicted, average='macro')
+# Compare ROC curves of both models
+plt.figure(figsize=(12, 8))
 
-# Add Neural Network to results
-all_models = results_df.reset_index().copy()
-nn_row = pd.DataFrame([{
-    'Model': 'Neural Network',
-    'Accuracy': nn_accuracy,
-    'Precision': nn_precision,
-    'Recall': nn_recall,
-    'F1 Score': nn_f1
-}])
-all_models = pd.concat([all_models, nn_row], ignore_index=True)
+# Plot Neural Network ROC for the first class (as an example)
+nn_fpr, nn_tpr, _ = roc_curve((nn_y_true == 0).astype(int), nn_y_pred_proba[:, 0])
+nn_roc_auc = metrics.auc(nn_fpr, nn_tpr)
+plt.plot(nn_fpr, nn_tpr, 'darkorange', lw=2, label=f'Neural Network (AUC = {nn_roc_auc:.3f})')
 
-# %%
-# Create final comparison visualization
-plt.figure(figsize=(14, 8))
-sns.barplot(x='Model', y='Accuracy', data=all_models, palette='coolwarm')
-plt.title('All Models Accuracy Comparison', fontsize=16)
-plt.xlabel('Model', fontsize=14)
-plt.ylabel('Accuracy (%)', fontsize=14)
-plt.xticks(rotation=45, ha='right')
-plt.grid(axis='y', linestyle='--', alpha=0.7)
+# Plot XGBoost ROC for the first class
+xgb_fpr, xgb_tpr, _ = roc_curve((y_test == 0).astype(int), xgb_predicted_proba[:, 0])
+xgb_roc_auc = metrics.auc(xgb_fpr, xgb_tpr)
+plt.plot(xgb_fpr, xgb_tpr, 'forestgreen', lw=2, label=f'XGBoost (AUC = {xgb_roc_auc:.3f})')
 
-# Add value labels on bars
-for i, v in enumerate(all_models['Accuracy']):
-    plt.text(i, v + 0.5, f"{v:.1f}%", ha='center', fontsize=10)
-
+plt.plot([0, 1], [0, 1], 'navy', lw=2, linestyle='--', label='Reference Line')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate', fontsize=14)
+plt.ylabel('True Positive Rate', fontsize=14)
+plt.title('ROC Curve Comparison: Neural Network vs XGBoost (Class 0)', fontsize=16)
+plt.legend(loc="lower right", fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.6)
 plt.tight_layout()
 plt.show()
 
 # %%
-# Get the best model
-best_model_idx = all_models['Accuracy'].idxmax()
-best_model_name = all_models.loc[best_model_idx, 'Model']
-best_model_accuracy = all_models.loc[best_model_idx, 'Accuracy']
+# Calculate average metrics across classes
+nn_precision = metrics.precision_score(test_targets, nn_predicted, average='macro')
+nn_recall = metrics.recall_score(test_targets, nn_predicted, average='macro')
+nn_f1 = metrics.f1_score(test_targets, nn_predicted, average='macro')
+nn_accuracy = accuracy_score(test_targets, nn_predicted)
 
-print(f"Best Model: {best_model_name} with accuracy {best_model_accuracy:.2f}%")
+xgb_precision = metrics.precision_score(y_test, xgb_predicted, average='macro')
+xgb_recall = metrics.recall_score(y_test, xgb_predicted, average='macro')
+xgb_f1 = metrics.f1_score(y_test, xgb_predicted, average='macro')
+xgb_accuracy = accuracy_score(y_test, xgb_predicted)
+
+# Compare accuracy, precision, recall, and F1-score for both models
+metrics_comparison = pd.DataFrame({
+    'Model': ['Neural Network', 'XGBoost'],
+    'Accuracy': [nn_accuracy, xgb_accuracy],
+    'Precision': [nn_precision, xgb_precision],
+    'Recall': [nn_recall, xgb_recall],
+    'F1-Score': [nn_f1, xgb_f1],
+})
+
+metrics_comparison.set_index('Model', inplace=True)
+
+plt.figure(figsize=(14, 8))
+ax = sns.heatmap(metrics_comparison, annot=True, cmap='coolwarm', fmt='.3f', linewidths=0.5)
+plt.title('Model Performance Comparison: Neural Network vs XGBoost', fontsize=16)
+plt.tight_layout()
+plt.show()
+
+# %%
+# Bar chart comparison of key metrics
+metrics_df_melted = pd.melt(metrics_comparison.reset_index(), id_vars=['Model'])
+
+plt.figure(figsize=(14, 8))
+ax = sns.barplot(x='variable', y='value', hue='Model', data=metrics_df_melted)
+plt.title('Model Performance Comparison: Neural Network vs XGBoost', fontsize=16)
+plt.xlabel('Metric', fontsize=14)
+plt.ylabel('Value', fontsize=14)
+plt.legend(title='Model')
+plt.ylim(0, 1.0)
+
+# Add value labels on bars
+for container in ax.containers:
+    ax.bar_label(container, fmt='%.3f', fontsize=10)
+
+plt.tight_layout()
+plt.show()
 
 
