@@ -1,31 +1,31 @@
-# Dataset 1 : Détection de Comptes Instagram Faux/Authentiques
+# Dataset 1: Instagram Fake/Genuine Account Detection
 
 ## Source
-Ce jeu de données provient de Kaggle : [Instagram Fake/Spammer/Genuine Accounts](https://www.kaggle.com/datasets/free4ever1/instagram-fake-spammer-genuine-accounts)
+This dataset comes from Kaggle: [Instagram Fake/Spammer/Genuine Accounts](https://www.kaggle.com/datasets/free4ever1/instagram-fake-spammer-genuine-accounts)
 
 ## Description
-Ce dataset contient des caractéristiques de comptes Instagram qui peuvent être utilisées pour identifier si un compte est authentique ou faux (fake). Il est conçu pour les tâches de classification binaire dans le domaine de la détection de fraude sur les réseaux sociaux.
+This dataset contains features of Instagram accounts that can be used to identify whether an account is genuine or fake. It is designed for binary classification tasks in the domain of social media fraud detection.
 
-## Caractéristiques (Features)
-Le fichier `train.csv` contient les colonnes suivantes :
+## Features
+The `train.csv` file contains the following columns:
 
-- `profile pic` : Présence d'une photo de profil (1 = Oui, 0 = Non)
-- `nums/length username` : Ratio entre le nombre de chiffres et la longueur totale du nom d'utilisateur
-- `fullname words` : Nombre de mots dans le nom complet
-- `nums/length fullname` : Ratio entre le nombre de chiffres et la longueur totale du nom complet
-- `name==username` : Indique si le nom et le nom d'utilisateur sont identiques (1 = Oui, 0 = Non)
-- `description length` : Longueur de la description/bio du profil
-- `external URL` : Présence d'une URL externe dans la bio (1 = Oui, 0 = Non)
-- `private` : Compte privé ou public (1 = Privé, 0 = Public)
-- `#posts` : Nombre de publications
-- `#followers` : Nombre d'abonnés
-- `#follows` : Nombre d'abonnements
-- `fake` : Variable cible/étiquette (1 = Compte faux, 0 = Compte authentique)
+- `profile pic`: Presence of a profile picture (1 = Yes, 0 = No)
+- `nums/length username`: Ratio between the number of digits and the total length of the username
+- `fullname words`: Number of words in the full name
+- `nums/length fullname`: Ratio between the number of digits and the total length of the full name
+- `name==username`: Indicates whether the name and username are identical (1 = Yes, 0 = No)
+- `description length`: Length of the profile description/bio
+- `external URL`: Presence of an external URL in the bio (1 = Yes, 0 = No)
+- `private`: Private or public account (1 = Private, 0 = Public)
+- `#posts`: Number of posts
+- `#followers`: Number of followers
+- `#follows`: Number of accounts followed
+- `fake`: Target variable/label (1 = Fake account, 0 = Genuine account)
 
-## Applications possibles
-- Détection de faux comptes sur Instagram
-- Analyse de comportements frauduleux sur les réseaux sociaux
-- Développement de systèmes de sécurité pour les plateformes sociales
+## Possible Applications
+- Detection of fake accounts on Instagram
+- Analysis of fraudulent behavior on social networks
+- Development of security systems for social platforms
 
 ## Format
-Fichier CSV avec 12 colonnes
+CSV file with 12 columns

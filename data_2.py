@@ -442,7 +442,6 @@ xgb_model.fit(
     y_train_xgb,
     eval_set=eval_set,
     verbose=True,
-    early_stopping_rounds=10
 )
 
 # %% [markdown]

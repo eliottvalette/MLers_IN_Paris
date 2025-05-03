@@ -1,31 +1,31 @@
-# Dataset 2 : Classification de Comptes Instagram (Réels/Bots/Arnaques)
+# Dataset 2: Instagram Account Classification (Real/Bot/Scam)
 
 ## Source
-Ce jeu de données provient de Kaggle : [Instagram Fake/Spammer/Genuine Accounts](https://www.kaggle.com/datasets/free4ever1/instagram-fake-spammer-genuine-accounts)
+This dataset comes from Kaggle: [Instagram Fake/Spammer/Genuine Accounts](https://www.kaggle.com/datasets/free4ever1/instagram-fake-spammer-genuine-accounts)
 
 ## Description
-Ce dataset contient des caractéristiques de comptes Instagram qui peuvent être utilisées pour identifier si un compte est réel, un bot, ou lié à une arnaque. Il est conçu pour les tâches de classification multi-classes dans le domaine de la détection de fraude et d'activités malveillantes sur les réseaux sociaux.
+This dataset contains features of Instagram accounts that can be used to identify whether an account is real, a bot, or linked to a scam. It is designed for multi-class classification tasks in the domain of fraud detection and malicious activities on social networks.
 
-## Caractéristiques (Features)
-Le fichier `LIMFADD.csv` contient les colonnes suivantes :
+## Features
+The `LIMFADD.csv` file contains the following columns:
 
-- `Followers` : Nombre d'abonnés du compte
-- `Following` : Nombre d'abonnements du compte (comptes suivis)
-- `Following/Followers` : Ratio entre abonnements et abonnés
-- `Posts` : Nombre de publications
-- `Posts/Followers` : Ratio entre publications et abonnés
-- `Bio` : Présence d'une biographie (Yes = Oui, N = Non)
-- `Profile Picture` : Présence d'une photo de profil (Yes = Oui, N = Non)
-- `External Link` : Présence d'un lien externe dans la bio (Yes = Oui, N = Non)
-- `Mutual Friends` : Nombre d'amis mutuels
-- `Threads` : Utilisation de la fonctionnalité Threads (Yes = Oui, N = Non)
-- `Labels` : Variable cible/étiquette (Real = Compte réel, Bot = Compte automatisé, Scam = Compte d'arnaque)
+- `Followers`: Number of account followers
+- `Following`: Number of accounts followed
+- `Following/Followers`: Ratio between following and followers
+- `Posts`: Number of posts
+- `Posts/Followers`: Ratio between posts and followers
+- `Bio`: Presence of a biography (Yes, N = No)
+- `Profile Picture`: Presence of a profile picture (Yes, N = No)
+- `External Link`: Presence of an external link in the bio (Yes, N = No)
+- `Mutual Friends`: Number of mutual friends
+- `Threads`: Use of the Threads feature (Yes, N = No)
+- `Labels`: Target variable/label (Real = Real account, Bot = Automated account, Scam = Scam account)
 
-## Applications possibles
-- Détection de comptes automatisés (bots) sur Instagram
-- Identification de comptes liés à des arnaques
-- Analyse des caractéristiques distinctives entre comptes légitimes et frauduleux
-- Développement de systèmes de sécurité pour les plateformes sociales
+## Possible Applications
+- Detection of automated accounts (bots) on Instagram
+- Identification of accounts linked to scams
+- Analysis of distinctive features between legitimate and fraudulent accounts
+- Development of security systems for social platforms
 
 ## Format
-Fichier CSV avec 11 colonnes
+CSV file with 11 columns
