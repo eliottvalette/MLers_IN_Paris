@@ -1,7 +1,0 @@
-https://www.kaggle.com/datasets/manumathewjiss/instagram-multi-class-fake-account-dataset-imfad
-
-then go to :
-https://www.tapadhirdas.com/das-lab/datasets/limfadd
-
-click on the link :
-https://drive.google.com/file/d/16tWNyO_2CY-5df8cSqz8McwDbdK688Pi/view

@@ -1,7 +1,14 @@
 # Dataset 2: Instagram Account Classification (Real/Bot/Scam)
 
 ## Source
-This dataset comes from Kaggle: [Instagram Fake/Spammer/Genuine Accounts](https://www.kaggle.com/datasets/free4ever1/instagram-fake-spammer-genuine-accounts)
+This dataset comes from Kaggle: [LIMFADD: Instagram Multi-Class Fake Detection](https://www.kaggle.com/datasets/manumathewjiss/instagram-multi-class-fake-account-dataset-imfad)
+
+Then go to :
+https://www.tapadhirdas.com/das-lab/datasets/limfadd
+
+Click on the link :
+https://drive.google.com/file/d/16tWNyO_2CY-5df8cSqz8McwDbdK688Pi/view
+
 
 ## Description
 This dataset contains features of Instagram accounts that can be used to identify whether an account is real, a bot, or linked to a scam. It is designed for multi-class classification tasks in the domain of fraud detection and malicious activities on social networks.
